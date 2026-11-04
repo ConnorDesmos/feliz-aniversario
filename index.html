@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un detalle hecho con mucho amor 🧡</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@1.67.0"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at center, #2d1b2e 0%, #1a0b1c 100%);
+            color: #f8fafc;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .font-romantic {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .font-handwriting {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Animación de Crecimiento del Ramo de Tulipanes */
+        @keyframes tulipGrowth {
+            0% {
+                transform: translateY(80px) scale(0.5);
+                opacity: 0;
+            }
+            60% {
+                transform: translateY(-8px) scale(1.03);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes gentleSway {
+            0%, 100% { transform: rotate(-2.5deg); }
+            50% { transform: rotate(2.5deg); }
+        }
+
+        .tulip-grow {
+            animation: tulipGrowth 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform-origin: bottom center;
+        }
+
+        .tulip-sway {
+            animation: gentleSway 5s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+
+        /* Escenario Carrusel 3D */
+        .carousel-stage {
+            perspective: 1000px;
+            width: 100%;
+            height: 370px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-3d {
+            position: absolute;
+            width: 270px;
+            height: 350px;
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        /* ESTILO ROLLO DE PELÍCULA 35MM DE ALTA FIDELIDAD */
+        .filmstrip-container {
+            background-color: #050505;
+            padding: 18px 0;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Perforaciones cuadradas de cinta de 35mm */
+        .filmstrip-container::before,
+        .filmstrip-container::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 10px;
+            z-index: 25;
+            background-image: repeating-linear-gradient(
+                90deg,
+                #ffffff 0px,
+                #ffffff 8px,
+                transparent 8px,
+                transparent 16px
+            );
+            opacity: 0.9;
+        }
+        .filmstrip-container::before { top: 4px; }
+        .filmstrip-container::after { bottom: 4px; }
+
+        .film-track {
+            display: flex;
+            gap: 12px;
+            padding: 0 10px;
+            overflow-x: auto;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .film-track:active {
+            cursor: grabbing;
+        }
+
+        .text-shimmer {
+            background: linear-gradient(90deg, #fdba74 0%, #ffffff 50%, #f472b6 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center select-none relative overflow-x-hidden">
+
+    <!-- Canvas para Pétalos Interáctivos -->
+    <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- Luces Ambientales de Fondo -->
+    <div class="fixed top-10 -left-20 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed bottom-10 -right-20 w-80 h-80 bg-pink-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Botón de Control de Audio -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="audioToggle" aria-label="Activar o silenciar música" class="glass-btn p-3 rounded-full text-orange-300 shadow-lg flex items-center justify-center">
+            <i data-lucide="music" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="w-full max-w-md min-h-[100dvh] flex flex-col justify-between items-center z-10 px-4 py-4 relative">
+
+        <!-- ==================== PANTALLA 1: BIENVENIDA ==================== -->
+        <section id="welcomeScreen" class="w-full flex-1 flex flex-col items-center justify-between py-2 transition-all duration-700 opacity-100">
+            <div class="text-center mt-2">
+                <span class="text-[11px] font-semibold tracking-widest text-orange-300 uppercase bg-orange-950/60 px-3 py-1 rounded-full border border-orange-500/30">
+                    Nuestra Historia
+                </span>
+                <h1 class="text-2xl font-romantic text-shimmer font-bold mt-3 leading-tight px-2">
+                    Un detalle hecho con mucho amor para mi chica especial 🧡
+                </h1>
+                <p class="text-xs text-orange-200/80 mt-1 font-medium">Cada segundo a tu lado es un regalo</p>
+            </div>
+
+            <!-- Ramo de Tulipanes Vectoriales Abundante con Animación de Crecimiento -->
+            <div class="relative w-80 h-72 flex items-center justify-center my-auto">
+                <div id="tulipContainer" class="w-full h-full tulip-grow flex items-center justify-center">
+                    <svg class="w-full h-full drop-shadow-[0_12px_24px_rgba(251,146,60,0.35)]" viewBox="0 0 260 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="130" cy="120" r="95" fill="url(#bouquetGlow)" opacity="0.6"/>
+
+                        <!-- Tallos y Hojas -->
+                        <g opacity="0.95">
+                            <path d="M130 220 C125 150 90 100 70 80" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 220 C128 150 105 95 95 70" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 220 C130 150 130 90 130 65" stroke="#047857" stroke-width="4.5" stroke-linecap="round"/>
+                            <path d="M130 220 C132 150 155 95 165 70" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 220 C135 150 170 100 190 80" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M130 220 C115 160 65 130 45 105" stroke="#34d399" stroke-width="3.5" stroke-linecap="round"/>
+                            <path d="M130 220 C145 160 195 130 215 105" stroke="#34d399" stroke-width="3.5" stroke-linecap="round"/>
+
+                            <!-- Hojas Abundantes -->
+                            <path d="M130 195 C85 175 60 130 75 115 C90 138 118 170 130 195 Z" fill="#059669" opacity="0.85"/>
+                            <path d="M130 195 C175 175 200 130 185 115 C170 138 142 170 130 195 Z" fill="#10b981" opacity="0.85"/>
+                            <path d="M130 180 C100 150 85 110 100 100 C110 120 125 150 130 180 Z" fill="#047857" opacity="0.8"/>
+                        </g>
+
+                        <!-- Tulipanes Ilustrados -->
+                        <g transform="translate(45, 105) scale(0.8)">
+                            <path d="M0 0 C-18 -15 -20 -40 0 -50 C20 -40 18 -15 0 0 Z" fill="#f97316"/>
+                            <path d="M-15 -35 C-22 -15 -10 0 0 0 C-8 -15 -8 -30 -15 -35 Z" fill="#fb923c"/>
+                            <path d="M15 -35 C22 -15 10 0 0 0 C8 -15 8 -30 15 -35 Z" fill="#fdba74"/>
+                        </g>
+                        <g transform="translate(70, 80) scale(0.85)">
+                            <path d="M0 0 C-18 -15 -20 -40 0 -50 C20 -40 18 -15 0 0 Z" fill="#fb7185"/>
+                            <path d="M-15 -35 C-22 -15 -10 0 0 0 C-8 -15 -8 -30 -15 -35 Z" fill="#f43f5e"/>
+                            <path d="M15 -35 C22 -15 10 0 0 0 C8 -15 8 -30 15 -35 Z" fill="#fda4af"/>
+                        </g>
+                        <g transform="translate(95, 70) scale(0.95)">
+                            <path d="M0 0 C-20 -16 -22 -42 0 -52 C22 -42 20 -16 0 0 Z" fill="#f43f5e"/>
+                            <path d="M-16 -37 C-24 -16 -11 0 0 0 C-9 -16 -9 -32 -16 -37 Z" fill="#fb7185"/>
+                            <path d="M16 -37 C24 -16 11 0 0 0 C9 -16 9 -32 16 -37 Z" fill="#fda4af"/>
+                        </g>
+                        <g transform="translate(130, 65) scale(1.15)">
+                            <path d="M0 0 C-22 -18 -24 -48 0 -60 C24 -48 22 -18 0 0 Z" fill="#ea580c"/>
+                            <path d="M-18 -42 C-26 -18 -12 0 0 0 C-10 -18 -10 -35 -18 -42 Z" fill="#f97316"/>
+                            <path d="M18 -42 C26 -18 12 0 0 0 C10 -18 10 -35 18 -42 Z" fill="#fb923c"/>
+                        </g>
+                        <g transform="translate(165, 70) scale(0.95)">
+                            <path d="M0 0 C-20 -16 -22 -42 0 -52 C22 -42 20 -16 0 0 Z" fill="#e11d48"/>
+                            <path d="M-16 -37 C-24 -16 -11 0 0 0 C-9 -16 -9 -32 -16 -37 Z" fill="#f43f5e"/>
+                            <path d="M16 -37 C24 -16 11 0 0 0 C9 -16 9 -32 16 -37 Z" fill="#fb7185"/>
+                        </g>
+                        <g transform="translate(190, 80) scale(0.85)">
+                            <path d="M0 0 C-18 -15 -20 -40 0 -50 C20 -40 18 -15 0 0 Z" fill="#c2410c"/>
+                            <path d="M-15 -35 C-22 -15 -10 0 0 0 C-8 -15 -8 -30 -15 -35 Z" fill="#ea580c"/>
+                            <path d="M15 -35 C22 -15 10 0 0 0 C8 -15 8 -30 15 -35 Z" fill="#f97316"/>
+                        </g>
+                        <g transform="translate(215, 105) scale(0.8)">
+                            <path d="M0 0 C-18 -15 -20 -40 0 -50 C20 -40 18 -15 0 0 Z" fill="#fb923c"/>
+                            <path d="M-15 -35 C-22 -15 -10 0 0 0 C-8 -15 -8 -30 -15 -35 Z" fill="#fdba74"/>
+                            <path d="M15 -35 C22 -15 10 0 0 0 C8 -15 8 -30 15 -35 Z" fill="#f97316"/>
+                        </g>
+
+                        <defs>
+                            <radialGradient id="bouquetGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(130 120) rotate(90) scale(95)">
+                                <stop stop-color="#f97316"/>
+                                <stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+                            </radialGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Contador en Tiempo Real (Desde el 6 de Noviembre de 2022) -->
+            <div class="glass-card w-full p-3.5 rounded-2xl text-center border border-orange-500/20 my-1">
+                <span class="text-[10px] text-orange-300/90 font-semibold tracking-wider uppercase flex items-center justify-center gap-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-orange-400"></i> Tiempo Juntos
+                </span>
+                <div id="liveTimer" class="grid grid-cols-5 gap-1 text-center mt-2 font-mono">
+                    <div class="flex flex-col"><span id="tYears" class="text-base font-bold text-white">0</span><span class="text-[9px] text-orange-200/70 font-sans">años</span></div>
+                    <div class="flex flex-col"><span id="tDays" class="text-base font-bold text-white">0</span><span class="text-[9px] text-orange-200/70 font-sans">días</span></div>
+                    <div class="flex flex-col"><span id="tHours" class="text-base font-bold text-white">0</span><span class="text-[9px] text-orange-200/70 font-sans">hrs</span></div>
+                    <div class="flex flex-col"><span id="tMinutes" class="text-base font-bold text-white">0</span><span class="text-[9px] text-orange-200/70 font-sans">min</span></div>
+                    <div class="flex flex-col"><span id="tSecs" class="text-base font-bold text-orange-400">0</span><span class="text-[9px] text-orange-200/70 font-sans">seg</span></div>
+                </div>
+            </div>
+
+            <button id="startBtn" aria-label="Abrir el regalo" class="glass-btn w-full py-3.5 px-6 rounded-2xl text-white font-semibold text-base shadow-2xl flex items-center justify-center gap-2 border border-orange-400/40 hover:border-orange-300 active:scale-95 transition-all mt-1">
+                <span>Toca aquí para abrir tu regalo</span>
+                <i data-lucide="sparkles" class="w-5 h-5 text-orange-400"></i>
+            </button>
+        </section>
+
+        <!-- ==================== PANTALLA 2: CARRUSEL 3D DE CARTAS ==================== -->
+        <section id="menuScreen" class="w-full flex-1 flex flex-col justify-between items-center py-2 hidden opacity-0 transition-all duration-700">
+            
+            <div class="text-center mt-1">
+                <span id="cardCounterBadge" class="text-[11px] font-semibold text-pink-300 uppercase tracking-widest bg-pink-950/60 px-3 py-1 rounded-full border border-pink-500/30">
+                    RECUERDO 1 DE 5
+                </span>
+                <h2 class="text-2xl font-romantic text-white font-bold mt-2">
+                    Nuestros Momentos 🧡
+                </h2>
+            </div>
+
+            <!-- ESCENARIO CARRUSEL 3D -->
+            <div class="carousel-stage my-auto" id="carouselStage">
+                <!-- Cartas 3D inyectadas dinámicamente -->
+            </div>
+
+            <!-- Botones de Navegación del Carrusel -->
+            <div class="flex items-center gap-4 my-2">
+                <button id="prevCardBtn" aria-label="Recuerdo anterior" class="glass-btn p-3 rounded-full text-orange-300 border border-orange-400/30 active:scale-90">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <span class="text-xs text-orange-200/70 font-medium">Toca la carta para abrir</span>
+                <button id="nextCardBtn" aria-label="Recuerdo siguiente" class="glass-btn p-3 rounded-full text-orange-300 border border-orange-400/30 active:scale-90">
+                    <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- ==================== MODAL DETALLE DE CARTA ==================== -->
+        <section id="cardDetailModal" class="fixed inset-0 z-50 bg-slate-950/92 backdrop-blur-xl flex flex-col justify-between items-center p-4 hidden opacity-0 transition-all duration-500">
+            
+            <div class="w-full flex items-center justify-between border-b border-orange-500/20 pb-3 mt-1">
+                <span id="modalChapterBadge" class="text-xs font-semibold text-orange-300 bg-orange-950/80 px-3 py-1 rounded-full border border-orange-500/30">
+                    Capítulo 1
+                </span>
+                <button id="closeModalBtn" aria-label="Volver al menú" class="glass-btn px-3 py-1.5 rounded-full text-xs text-orange-200 flex items-center gap-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al menú
+                </button>
+            </div>
+
+            <div class="w-full flex-1 overflow-y-auto my-3 flex flex-col gap-5 pr-1">
+                
+                <!-- Carta Inicial -->
+                <div class="glass-card p-5 rounded-2xl border border-orange-400/30 relative">
+                    <div class="flex items-center gap-2 mb-2 text-orange-300">
+                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                        <h3 id="modalChapterTitle" class="font-romantic text-lg font-bold text-white"></h3>
+                    </div>
+                    <p id="modalInitialLetter" class="font-handwriting text-xl text-orange-100 leading-relaxed"></p>
+                </div>
+
+                <!-- Tira de Película Horizontal 35mm con Auto-Scroll y Arrastre Manual -->
+                <div class="w-full py-2">
+                    <div class="flex items-center justify-between text-xs text-orange-200/80 mb-2 px-1">
+                        <span class="flex items-center gap-1"><i data-lucide="film" class="w-4 h-4 text-orange-400"></i> Rollo de Recuerdos (35mm)</span>
+                        <span class="text-[10px] text-orange-300/60">Desplaza manualmente o deja rodar</span>
+                    </div>
+
+                    <div class="filmstrip-container overflow-hidden">
+                        <div class="film-track no-scrollbar" id="filmTrack"></div>
+                    </div>
+                </div>
+
+                <!-- Carta Final -->
+                <div class="glass-card p-5 rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-950/40 to-purple-950/40">
+                    <div class="flex items-center gap-2 mb-2 text-pink-300">
+                        <i data-lucide="heart" class="w-4 h-4 fill-pink-400"></i>
+                        <h4 class="font-romantic text-base font-bold text-white">Con todo mi amor...</h4>
+                    </div>
+                    <p id="modalFinalLetter" class="font-handwriting text-xl text-pink-100 leading-relaxed"></p>
+                </div>
+
+            </div>
+
+            <button id="closeModalBottomBtn" aria-label="Volver al menú principal" class="glass-btn w-full py-3 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 border border-orange-400/40 active:scale-95 transition-all">
+                <i data-lucide="arrow-left" class="w-4 h-4 text-orange-300"></i> Volver al menú principal
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Reproductor de Piano Romántico Suave -->
+    <audio id="bgMusic" loop preload="metadata">
+        <source src="assets/musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const CONFIG = {
+            startDate: new Date("2022-11-06T00:00:00"),
+            photosPerChapter: 10,
+            chapters: [
+                {
+                    id: 1,
+                    title: "El Comienzo de Nuestra Historia",
+                    subtitle: "Donde todo cobró sentido",
+                    initialLetter: "Recuerdo perfectamente los primeros momentos a tu lado. Parecía que el tiempo transcurría diferente cuando conversábamos. Conectar contigo fue el regalo más bonito que la vida me dio.",
+                    finalLetter: "Desde que estamos juntos me he sentido muy feliz, siempre estoy contento por haber tenido la oportunidad de compartir tantas cosas contigo."
+                },
+                {
+                    id: 2,
+                    title: "Tus Sonrisas Favoritas",
+                    subtitle: "Mi lugar feliz en el mundo",
+                    initialLetter: "Amo tu sonrisa, amo verte feliz, me encanta contemplar lo lindo de tu rostro cada vez que se forma incluso la más mínima risa, jamás me canso de ella.",
+                    finalLetter: "Prometo hacer todo lo que esté en mis manos para seguir sacándote sonrisas todos los días de nuestra vida."
+                },
+                {
+                    id: 3,
+                    title: "Nuestras Aventuras Juntos",
+                    subtitle: "Caminos compartidos",
+                    initialLetter: "Amo cada paseo, cada salida improvisada y cada conversación larga a tu lado. Contigo cualquier lugar común se vuelve una aventura especial.",
+                    finalLetter: "El mundo es mucho más bonito cuando lo recorro tomado de tu mano."
+                },
+                {
+                    id: 4,
+                    title: "Pequeños Grandes Momentos",
+                    subtitle: "La magia de lo cotidiano",
+                    initialLetter: "Sea el día que sea, una salida a comer, al cine, o incluso por un helado. Si estoy contigo ese momento es único.",
+                    finalLetter: "Contigo me siento completo, eres una persona maravillosa y espero que estos momentos duren por siempre"
+                },
+                {
+                    id: 5,
+                    title: "Mi Promesa y Nuestro Futuro",
+                    subtitle: "Por todo lo que viene",
+                    initialLetter: "Hoy no solo celebro lo que hemos vivido, sino todo lo que vamos a construir juntos. Prometo cuidarte, respetarte y estar a tu lado en cada etapa.",
+                    finalLetter: "Feliz aniversario mi morenita preciosa, Te Amo con todo mi corazón"
+                }
+            ]
+        };
+
+        // Fotos locales: Recuerdos/Cap N/1..10.jpeg
+        const photoUrl = (cap, num) => `Recuerdos/Cap%20${cap}/${num}.jpeg`;
+        CONFIG.chapters.forEach((chapter, idx) => {
+            const cap = idx + 1;
+            chapter.coverImg = photoUrl(cap, 1);
+            chapter.photos = Array.from({ length: CONFIG.photosPerChapter }, (_, i) => photoUrl(cap, i + 1));
+        });
+
+        // Web Audio API para Efectos Sonoros
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playHarmonicChime() {
+            try {
+                initAudio();
+                const freqs = [523.25, 659.25, 783.99, 1046.50];
+                freqs.forEach((f, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(f, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.8);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + idx * 0.08);
+                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.8);
+                });
+            } catch(e){}
+        }
+
+        function playSoftClick() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e){}
+        }
+
+        // Contador en tiempo real
+        function startLiveTimer() {
+            function update() {
+                const now = new Date();
+                const start = CONFIG.startDate;
+
+                let years = now.getFullYear() - start.getFullYear();
+                const anniversary = new Date(start);
+                anniversary.setFullYear(start.getFullYear() + years);
+                if (anniversary > now) {
+                    years--;
+                    anniversary.setFullYear(start.getFullYear() + years);
+                }
+
+                const diff = now - anniversary;
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                document.getElementById('tYears').innerText = years;
+                document.getElementById('tDays').innerText = days;
+                document.getElementById('tHours').innerText = String(hours).padStart(2, '0');
+                document.getElementById('tMinutes').innerText = String(minutes).padStart(2, '0');
+                document.getElementById('tSecs').innerText = String(seconds).padStart(2, '0');
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        // Control de Audio
+        let isPlayingAudio = false;
+        const bgMusic = document.getElementById('bgMusic');
+        const audioToggle = document.getElementById('audioToggle');
+
+        function toggleAudio(forcePlay = false) {
+            if (forcePlay || !isPlayingAudio) {
+                bgMusic.play().then(() => {
+                    isPlayingAudio = true;
+                    audioToggle.classList.add('bg-orange-500/30', 'border-orange-400');
+                    audioToggle.innerHTML = `<i data-lucide="volume-2" class="w-5 h-5"></i>`;
+                    lucide.createIcons();
+                }).catch(() => {});
+            } else {
+                bgMusic.pause();
+                isPlayingAudio = false;
+                audioToggle.classList.remove('bg-orange-500/30', 'border-orange-400');
+                audioToggle.innerHTML = `<i data-lucide="volume-x" class="w-5 h-5"></i>`;
+                lucide.createIcons();
+            }
+        }
+        audioToggle.addEventListener('click', () => toggleAudio());
+
+        // LÓGICA DEL CARRUSEL 3D
+        let activeCardIndex = 0;
+        const totalCards = CONFIG.chapters.length;
+
+        function render3DCarousel() {
+            const stage = document.getElementById('carouselStage');
+            stage.innerHTML = '';
+
+            CONFIG.chapters.forEach((ch, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card-3d border border-purple-500/30 bg-gradient-to-b from-purple-950/80 via-slate-900/90 to-black p-4 flex flex-col justify-between overflow-hidden backdrop-blur-md';
+                
+                card.innerHTML = `
+                    <div class="relative w-full h-44 rounded-xl overflow-hidden border border-white/10 shadow-inner">
+                        <img src="${ch.coverImg}" class="w-full h-full object-cover" alt="${ch.title}">
+                    </div>
+
+                    <div class="my-auto text-center px-1">
+                        <h3 class="font-romantic font-bold text-lg text-white leading-snug">${ch.title}</h3>
+                        <p class="text-xs text-orange-200/70 mt-1 font-medium">${ch.subtitle}</p>
+                    </div>
+
+                    <div class="w-full text-center">
+                        <span class="text-[10px] font-semibold text-orange-300 uppercase tracking-widest bg-orange-950/70 px-3 py-1 rounded-full border border-orange-500/30 inline-flex items-center gap-1">
+                            Toca para abrir 💌
+                        </span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    if (idx === activeCardIndex) {
+                        openChapterModal(ch);
+                    } else {
+                        activeCardIndex = idx;
+                        update3DCarousel();
+                    }
+                });
+
+                stage.appendChild(card);
+            });
+
+            update3DCarousel();
+        }
+
+        function update3DCarousel() {
+            const cards = document.querySelectorAll('.card-3d');
+            const half = totalCards / 2;
+
+            cards.forEach((card, idx) => {
+                let offset = idx - activeCardIndex;
+                if (offset > half) offset -= totalCards;
+                if (offset < -half) offset += totalCards;
+
+                if (offset === 0) {
+                    card.style.transform = `translateX(0px) translateZ(0px) rotateY(0deg) scale(1)`;
+                    card.style.opacity = '1';
+                    card.style.zIndex = '30';
+                    card.style.pointerEvents = 'auto';
+                } else if (offset === 1) {
+                    card.style.transform = `translateX(75px) translateZ(-90px) rotateY(-18deg) scale(0.88)`;
+                    card.style.opacity = '0.75';
+                    card.style.zIndex = '20';
+                    card.style.pointerEvents = 'auto';
+                } else if (offset === -1) {
+                    card.style.transform = `translateX(-75px) translateZ(-90px) rotateY(18deg) scale(0.88)`;
+                    card.style.opacity = '0.75';
+                    card.style.zIndex = '20';
+                    card.style.pointerEvents = 'auto';
+                } else {
+                    card.style.transform = `translateX(${offset * 90}px) translateZ(-160px) scale(0.75)`;
+                    card.style.opacity = '0.3';
+                    card.style.zIndex = '10';
+                    card.style.pointerEvents = 'none';
+                }
+            });
+
+            document.getElementById('cardCounterBadge').innerText = `RECUERDO ${activeCardIndex + 1} DE ${totalCards}`;
+        }
+
+        document.getElementById('prevCardBtn').addEventListener('click', () => {
+            playSoftClick();
+            activeCardIndex = (activeCardIndex - 1 + totalCards) % totalCards;
+            update3DCarousel();
+        });
+
+        document.getElementById('nextCardBtn').addEventListener('click', () => {
+            playSoftClick();
+            activeCardIndex = (activeCardIndex + 1) % totalCards;
+            update3DCarousel();
+        });
+
+        // Swipe táctil en el carrusel
+        (function initCarouselSwipe() {
+            const stage = document.getElementById('carouselStage');
+            let touchStartX = null;
+
+            stage.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+            }, { passive: true });
+
+            stage.addEventListener('touchend', (e) => {
+                if (touchStartX === null) return;
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                touchStartX = null;
+                if (Math.abs(dx) < 40) return;
+                playSoftClick();
+                activeCardIndex = (activeCardIndex + (dx < 0 ? 1 : -1) + totalCards) % totalCards;
+                update3DCarousel();
+            }, { passive: true });
+        })();
+
+        // Navegación con teclado
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('cardDetailModal');
+            const menu = document.getElementById('menuScreen');
+
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+                return;
+            }
+
+            if (modal.classList.contains('hidden') && !menu.classList.contains('hidden')) {
+                if (e.key === 'ArrowLeft') {
+                    playSoftClick();
+                    activeCardIndex = (activeCardIndex - 1 + totalCards) % totalCards;
+                    update3DCarousel();
+                } else if (e.key === 'ArrowRight') {
+                    playSoftClick();
+                    activeCardIndex = (activeCardIndex + 1) % totalCards;
+                    update3DCarousel();
+                }
+            }
+        });
+
+        // Transición de Bienvenida al Menú
+        document.getElementById('startBtn').addEventListener('click', () => {
+            playHarmonicChime();
+            toggleAudio(true);
+
+            const welcome = document.getElementById('welcomeScreen');
+            const menu = document.getElementById('menuScreen');
+
+            welcome.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                welcome.classList.add('hidden');
+                menu.classList.remove('hidden');
+                setTimeout(() => {
+                    menu.classList.remove('opacity-0');
+                }, 50);
+            }, 600);
+        });
+
+        // DESPLAZAMIENTO AUTOMÁTICO Y MANUAL CONTINUO DE CINTA 35MM
+        let filmAnimId = null;
+        let isUserDragging = false;
+        let startX = 0;
+        let scrollLeftPos = 0;
+
+        function startFilmAutoScroll(track) {
+            cancelAnimationFrame(filmAnimId);
+            const speed = 1.2;
+            let loopWidth = 0;
+            let lastMeasure = 0;
+
+            // Se mide cuando el layout ya está listo (Tailwind puede tardar en aplicar estilos)
+            function measure() {
+                const half = track.children.length / 2;
+                const first = track.children[0];
+                const second = track.children[half];
+                if (!first || !second) return;
+                const width = second.offsetLeft - first.offsetLeft;
+                if (width > track.clientWidth) {
+                    loopWidth = width;
+                    track.dataset.loopWidth = String(width);
+                }
+            }
+
+            function step(timestamp) {
+                if (!isUserDragging && track) {
+                    if (!loopWidth || timestamp - lastMeasure > 1000) {
+                        measure();
+                        lastMeasure = timestamp;
+                    }
+                    track.scrollLeft += speed;
+                    if (loopWidth > 0 && track.scrollLeft >= loopWidth) {
+                        track.scrollLeft -= loopWidth;
+                    }
+                }
+                filmAnimId = requestAnimationFrame(step);
+            }
+            filmAnimId = requestAnimationFrame(step);
+        }
+
+        function initFilmstripInteractions(track) {
+            // Eventos Táctiles y de Mouse para Arrastre Manual
+            const startDrag = (e) => {
+                isUserDragging = true;
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.pageX - track.offsetLeft;
+                scrollLeftPos = track.scrollLeft;
+            };
+
+            const stopDrag = () => {
+                if (!isUserDragging) return;
+                isUserDragging = false;
+            };
+
+            const moveDrag = (e) => {
+                if (!isUserDragging) return;
+                e.preventDefault();
+                const point = e.touches ? e.touches[0] : e;
+                const x = point.pageX - track.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                track.scrollLeft = scrollLeftPos - walk;
+            };
+
+            track.addEventListener('mousedown', startDrag);
+            track.addEventListener('mouseleave', stopDrag);
+            track.addEventListener('mouseup', stopDrag);
+            track.addEventListener('mousemove', moveDrag);
+
+            track.addEventListener('touchstart', startDrag, { passive: true });
+            track.addEventListener('touchend', stopDrag);
+            track.addEventListener('touchmove', moveDrag, { passive: false });
+        }
+
+        function openChapterModal(chapter) {
+            playSoftClick();
+            document.getElementById('modalChapterBadge').innerText = `Capítulo ${chapter.id} de ${totalCards}`;
+            document.getElementById('modalChapterTitle').innerText = chapter.title;
+            document.getElementById('modalInitialLetter').innerText = `"${chapter.initialLetter}"`;
+            document.getElementById('modalFinalLetter').innerText = `"${chapter.finalLetter}"`;
+
+            const filmTrack = document.getElementById('filmTrack');
+            filmTrack.innerHTML = '';
+
+            // Renderizar el set dos veces para un bucle continuo
+            const totalPhotos = chapter.photos.length;
+            const displayPhotos = [...chapter.photos, ...chapter.photos];
+
+            displayPhotos.forEach((imgUrl, idx) => {
+                const frame = document.createElement('div');
+                frame.className = 'w-48 h-32 flex-shrink-0 bg-black rounded overflow-hidden relative border border-neutral-800 shadow-md my-1';
+                frame.innerHTML = `
+                    <img src="${imgUrl}" alt="Foto ${(idx % totalPhotos) + 1} de ${totalPhotos}" loading="lazy" decoding="async" class="w-full h-full object-cover pointer-events-none">
+                    <span class="absolute bottom-1 right-1 bg-black/70 text-[9px] text-orange-200 px-1.5 py-0.5 rounded font-mono">
+                        ${(idx % totalPhotos) + 1}/${totalPhotos}
+                    </span>
+                `;
+                filmTrack.appendChild(frame);
+            });
+
+            const modal = document.getElementById('cardDetailModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 50);
+
+            filmTrack.scrollLeft = 0;
+            startFilmAutoScroll(filmTrack);
+        }
+
+        function closeModal() {
+            playSoftClick();
+            cancelAnimationFrame(filmAnimId);
+            isUserDragging = false;
+            const modal = document.getElementById('cardDetailModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 500);
+        }
+
+        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+        document.getElementById('closeModalBottomBtn').addEventListener('click', closeModal);
+
+        // Pétalos Interactivos con Canvas
+        function initPetalsCanvas() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = [];
+            const colors = ['#f97316', '#fb923c', '#f43f5e', '#fb7185', '#ea580c'];
+
+            class Petal {
+                constructor(x, y, isTouch = false) {
+                    this.isTouch = isTouch;
+                    this.reset(x, y);
+                }
+                reset(x, y) {
+                    this.x = x !== undefined ? x : Math.random() * canvas.width;
+                    this.y = y !== undefined ? y : canvas.height + 20;
+                    this.size = this.isTouch ? Math.random() * 10 + 8 : Math.random() * 12 + 6;
+                    this.speedY = this.isTouch ? Math.random() * 1.5 + 0.6 : Math.random() * 0.8 + 0.4;
+                    this.speedX = Math.random() * 0.8 - 0.4;
+                    this.opacity = this.isTouch ? 0.9 : Math.random() * 0.5 + 0.3;
+                    this.rotation = Math.random() * 360;
+                    this.rotationSpeed = Math.random() * 2 - 1;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                }
+                update() {
+                    this.y -= this.speedY;
+                    this.x += Math.sin(this.y * 0.01) + this.speedX;
+                    this.rotation += this.rotationSpeed;
+                    if (this.isTouch) this.opacity -= 0.012;
+                    if (this.y < -30 || (this.isTouch && this.opacity <= 0)) {
+                        if (this.isTouch) this.dead = true;
+                        else this.reset();
+                    }
+                }
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate((this.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = Math.max(0, this.opacity);
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.size);
+                    ctx.bezierCurveTo(-this.size * 0.7, -this.size * 0.5, -this.size * 0.7, this.size * 0.5, 0, this.size);
+                    ctx.bezierCurveTo(this.size * 0.7, this.size * 0.5, this.size * 0.7, -this.size * 0.5, 0, -this.size);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            for (let i = 0; i < 22; i++) particles.push(new Petal());
+
+            const MAX_PARTICLES = 140;
+
+            function addTouchPetals(x, y) {
+                if (particles.length >= MAX_PARTICLES) return;
+                particles.push(new Petal(x + (Math.random() * 16 - 8), y + (Math.random() * 16 - 8), true));
+            }
+
+            let lastPetalTime = 0;
+            window.addEventListener('touchmove', (e) => {
+                const now = performance.now();
+                if (now - lastPetalTime < 45) return;
+                lastPetalTime = now;
+                if (e.touches.length > 0) addTouchPetals(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('mousemove', (e) => {
+                const now = performance.now();
+                if (now - lastPetalTime < 60) return;
+                lastPetalTime = now;
+                addTouchPetals(e.clientX, e.clientY);
+            });
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update();
+                    p.draw();
+                    if (p.dead) particles.splice(i, 1);
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            startLiveTimer();
+            render3DCarousel();
+            initPetalsCanvas();
+
+            // Los listeners de la cinta se registran una sola vez
+            const filmTrack = document.getElementById('filmTrack');
+            if (filmTrack) initFilmstripInteractions(filmTrack);
+
+            // Activar suave balanceo tras la animación de brote
+            setTimeout(() => {
+                const bouquet = document.getElementById('tulipContainer');
+                if (bouquet) {
+                    bouquet.classList.remove('tulip-grow');
+                    bouquet.classList.add('tulip-sway');
+                }
+            }, 1600);
+        });
+    </script>
+</body>
+</html>
