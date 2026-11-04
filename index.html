@@ -161,6 +161,47 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Control de volumen */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            background: transparent;
+            outline: none;
+            touch-action: none;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 9999px;
+            background: linear-gradient(to right, #fb923c var(--volume, 50%), rgba(255, 255, 255, 0.15) var(--volume, 50%));
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            margin-top: -5px;
+            border-radius: 50%;
+            background: #fb923c;
+            border: 2px solid #fff7ed;
+            box-shadow: 0 0 10px rgba(251, 146, 60, 0.6);
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            border-radius: 9999px;
+            background: linear-gradient(to right, #fb923c var(--volume, 50%), rgba(255, 255, 255, 0.15) var(--volume, 50%));
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fb923c;
+            border: 2px solid #fff7ed;
+            box-shadow: 0 0 10px rgba(251, 146, 60, 0.6);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between items-center select-none relative overflow-x-hidden">
@@ -172,15 +213,18 @@
     <div class="fixed top-10 -left-20 w-72 h-72 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="fixed bottom-10 -right-20 w-80 h-80 bg-pink-600/20 rounded-full blur-3xl pointer-events-none"></div>
 
-    <!-- Botón de Control de Audio -->
-    <div class="fixed top-4 right-4 z-50">
-        <button id="audioToggle" aria-label="Activar o silenciar música" class="glass-btn p-3 rounded-full text-orange-300 shadow-lg flex items-center justify-center">
-            <i data-lucide="music" class="w-5 h-5"></i>
+    <!-- Barra de Control de Audio -->
+    <div id="audioBar" class="fixed top-0 left-0 right-0 z-[60] px-4 py-2 flex items-center gap-2 bg-slate-950/70 backdrop-blur-md border-b border-white/10">
+        <i data-lucide="volume-2" class="w-4 h-4 text-orange-300 shrink-0"></i>
+        <input id="volumeSlider" type="range" min="0" max="100" step="1" value="50" aria-label="Volumen de la música" class="flex-1 min-w-0 cursor-pointer">
+        <span id="volumeLabel" class="text-[10px] font-semibold text-orange-300 w-8 text-right shrink-0">50%</span>
+        <button id="audioToggle" aria-label="Activar o silenciar música" class="glass-btn p-2 rounded-full text-orange-300 flex items-center justify-center shrink-0">
+            <i data-lucide="music" class="w-4 h-4"></i>
         </button>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <main class="w-full max-w-md min-h-[100dvh] flex flex-col justify-between items-center z-10 px-4 py-4 relative">
+    <main class="w-full max-w-md min-h-[100dvh] flex flex-col justify-between items-center z-10 px-4 pt-16 pb-4 relative">
 
         <!-- ==================== PANTALLA 1: BIENVENIDA ==================== -->
         <section id="welcomeScreen" class="w-full flex-1 flex flex-col items-center justify-between py-2 transition-all duration-700 opacity-100">
@@ -314,7 +358,7 @@
         </section>
 
         <!-- ==================== MODAL DETALLE DE CARTA ==================== -->
-        <section id="cardDetailModal" class="fixed inset-0 z-50 bg-slate-950/92 backdrop-blur-xl flex flex-col justify-between items-center p-4 hidden opacity-0 transition-all duration-500">
+        <section id="cardDetailModal" class="fixed inset-0 z-50 bg-slate-950/92 backdrop-blur-xl flex flex-col justify-between items-center px-4 pb-4 pt-16 hidden opacity-0 transition-all duration-500">
             
             <div class="w-full flex items-center justify-between border-b border-orange-500/20 pb-3 mt-1">
                 <span id="modalChapterBadge" class="text-xs font-semibold text-orange-300 bg-orange-950/80 px-3 py-1 rounded-full border border-orange-500/30">
@@ -496,28 +540,78 @@
             setInterval(update, 1000);
         }
 
-        // Control de Audio
+        // Control de Audio y Volumen
         let isPlayingAudio = false;
+        let musicVolume = 0.5;
+        let musicGain = null;
+        let musicGainFailed = false;
         const bgMusic = document.getElementById('bgMusic');
         const audioToggle = document.getElementById('audioToggle');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeLabel = document.getElementById('volumeLabel');
+
+        function initMusicGain() {
+            if (musicGainFailed) return;
+            try {
+                initAudio();
+                if (!audioCtx) {
+                    musicGainFailed = true;
+                    return;
+                }
+                if (!musicGain) {
+                    bgMusic.volume = 1;
+                    const source = audioCtx.createMediaElementSource(bgMusic);
+                    musicGain = audioCtx.createGain();
+                    musicGain.gain.value = musicVolume;
+                    source.connect(musicGain);
+                    musicGain.connect(audioCtx.destination);
+                }
+            } catch (e) {
+                musicGainFailed = true;
+            }
+        }
+
+        function updateVolumeUI() {
+            const v = Number(volumeSlider.value);
+            volumeLabel.textContent = `${v}%`;
+            volumeSlider.style.setProperty('--volume', `${v}%`);
+        }
+
+        function updateAudioIcon() {
+            const icon = (isPlayingAudio && musicVolume > 0) ? 'volume-2' : 'volume-x';
+            audioToggle.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i>`;
+            lucide.createIcons();
+        }
+
+        function applyVolume() {
+            musicVolume = Number(volumeSlider.value) / 100;
+            initMusicGain();
+            if (musicGain) musicGain.gain.value = musicVolume;
+            else bgMusic.volume = musicVolume;
+            updateVolumeUI();
+        }
 
         function toggleAudio(forcePlay = false) {
             if (forcePlay || !isPlayingAudio) {
+                initMusicGain();
                 bgMusic.play().then(() => {
                     isPlayingAudio = true;
                     audioToggle.classList.add('bg-orange-500/30', 'border-orange-400');
-                    audioToggle.innerHTML = `<i data-lucide="volume-2" class="w-5 h-5"></i>`;
-                    lucide.createIcons();
+                    updateAudioIcon();
                 }).catch(() => {});
             } else {
                 bgMusic.pause();
                 isPlayingAudio = false;
                 audioToggle.classList.remove('bg-orange-500/30', 'border-orange-400');
-                audioToggle.innerHTML = `<i data-lucide="volume-x" class="w-5 h-5"></i>`;
-                lucide.createIcons();
+                updateAudioIcon();
             }
         }
+
+        bgMusic.volume = musicVolume;
+        volumeSlider.addEventListener('input', applyVolume);
+        volumeSlider.addEventListener('change', updateAudioIcon);
         audioToggle.addEventListener('click', () => toggleAudio());
+        updateVolumeUI();
 
         // LÓGICA DEL CARRUSEL 3D
         let activeCardIndex = 0;
