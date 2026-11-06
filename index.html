@@ -634,9 +634,10 @@
 
         // Fotos locales: Recuerdos/Cap N/1..10.jpeg
         const photoUrl = (cap, num) => `Recuerdos/Cap%20${cap}/${num}.jpeg`;
+        const coverUrl = (cap) => `Recuerdos/Portadas/${cap}.png`;
         CONFIG.chapters.forEach((chapter, idx) => {
             const cap = idx + 1;
-            chapter.coverImg = photoUrl(cap, 1);
+            chapter.coverImg = coverUrl(cap);
             chapter.photos = Array.from({ length: CONFIG.photosPerChapter }, (_, i) => photoUrl(cap, i + 1));
         });
 
